@@ -1,0 +1,19 @@
+name: cv-portfolio
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pytorch
+  - torchvision
+  - opencv
+  - numpy
+  - scipy
+  - matplotlib
+  - seaborn
+  - jupyter
+  - notebook
+  - pip
+  - pip:
+    - tqdm

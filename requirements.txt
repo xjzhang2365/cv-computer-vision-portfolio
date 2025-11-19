@@ -1,0 +1,79 @@
+# Core Libraries
+numpy>=1.20.0
+scipy>=1.7.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Computer Vision
+opencv-python>=4.5.0
+Pillow>=9.0.0
+
+# Jupyter
+jupyter>=1.0.0
+ipykernel>=6.0.0
+notebook>=6.4.0
+
+# Utilities
+tqdm>=4.62.0
+```
+
+**4.3: Create .gitignore**
+
+File → New File → Save as `.gitignore`
+```
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (don't upload large files)
+*.h5
+*.pth
+*.ckpt
+*.pkl
+data/large_files/
+*.zip
+*.tar.gz
+
+# Logs
+*.log
+logs/
