@@ -1,0 +1,224 @@
+__________________________________________________________________________________________________________________________________________________________________________________________
+TASK 1:
+
+>>> Create a dictionary to collect all configures of VGGNet models:
+
+configures = {
+    "A": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "B": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "D": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
+    "E": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
+}
+
+- In this case, we use model "A" -- VGG-11
+
+>>> Define a class vggnet, which includes methods that build VGG-11 model:
+
+*Define a method to build "Convolution" and "Pooling" layers:
+
+def make_conv_layers(self, architecture):
+    layers = []
+    in_channels = 3
+
+    for v in architecture:
+        if type(v) == int:
+            out_channels = v
+            layers += [nn.Conv2d(in_channels=in_channels,out_channels=out_channels,
+                                kernel_size=3, stride=1, padding=1),
+                       nn.ReLU(inplace=True)]
+            in_channels = v
+        elif v == 'M':
+            layers += [nn.MaxPool2d(kernel_size=2,stride=2)]
+
+    return nn.Sequential(*layers)
+
+- For each layer, "in_channels" is the number of channels of the input, "out_channels" is the channels of output.
+- "architecture" refers to the configure of VGG-11.
+- A for loop is used to access each layer of the model structure, if it's a "convolution layer", the input will be convolved with a convolution kernel with (kernel_size=3, stride=1, padding=1), 
+  and then be perfomed a ReLU function. If it's a "pooling layer", the input will be convolved with a Maxpooling kernel with (kernel_size=2,stride=2).
+- Finally, all layers will be stacked using nn.Sequential. 
+
+* Define methods to build classifier
+
+def __init__(self,cfg, num_classes):
+
+    super(vggnet,self).__init__()
+        
+    self.conv_layers = self.make_conv_layers(configures[cfg])
+    self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+    self.classifier = nn.Sequential(
+        nn.Linear(512*7*7, 1200),
+        nn.ReLU(True),
+        nn.Dropout(p=0.5),
+        nn.Linear(1200,1200),
+        nn.ReLU(True),
+        nn.Dropout(p=0.5),
+        nn.Linear(1200,num_classes)
+        )
+           
+
+def forward(self, x: torch.Tensor) -> torch.Tensor:
+    x = self.conv_layers(x)
+    x = self.avgpool(x)
+    x = x.reshape(x.shape[0],-1)
+    x = self.classifier(x)
+    return x
+
+- According to the architecture of VGG model,there are 3 full connected layers next to convolutional layers. Linear and ReLU functions will be used to the output of convolutional layers. 
+- After trying different values, I finally choose 1200 as the feature number in FC layer.
+- The computational cost is 184.75M FLOPS.
+
+_________________________________________________________________________________________________________________________________________________________________________________________
+TASK 2
+
+>>> Define a class CrossEntropyLoss measure the performance of a classification model
+
+- According to the cross entropy equation, the method to calculate the loss is as following:
+
+  loss = -1.*x.gather(1, y.unsqueeze(-1)) + torch.log(torch.exp(x).sum(dim=1))
+  loss = torch.mean(loss)
+
+  In which x is predictions and y is labels.  
+
+___________________________________________________________________________________________________________________________________________________________________________________________
+TASK 3
+
+>>> Define a class Padding to process the image with padding. 
+
+class Padding(object):
+    def __init__(self, padding):
+        self.padding = padding
+
+    def __call__(self, img, **kwargs):
+        
+        pad = self.padding
+        cv2_img = cv2.cvtColor(np.asarray(img),cv2.COLOR_RGB2BGR)
+        img_pad = cv2.copyMakeBorder(cv2_img, pad, pad, pad, pad, cv2.BORDER_CONSTANT, (0,0,0))
+        img = PIL.Image.fromarray(cv2.cvtColor(img_pad,cv2.COLOR_BGR2RGB))
+        return img
+
+- Padding by using opencv module
+- Convert PIL image to array before using cv2 function, and then convert back after processing
+
+>>> Define a RandomCrop class to crop the image randomly. 
+
+class RandomCrop(object):
+    def __init__(self, size):
+        self.size = size
+
+
+    def __call__(self, img, **kwargs):
+        
+        w,h = img.size
+        tw = self.size
+        th = self.size
+        if w == tw and h == th:
+            img = img.crop((0,0,w,h))
+
+        i = random.randint(0,w-tw)
+        j = random.randint(0,h-th)
+        img = img.crop((i,j,i+tw,j+th))
+
+
+        return img
+
+- Use functions from PIL to do the crop process
+- Use functions from random to crop the image from random positions.
+
+>>> Define a class RandomFlip to flip the image randomly
+
+class RandomFlip(object):
+    def __init__(self, p=0.5):
+        
+        self.p = p
+ 
+    def __call__(self, img, **kwargs):
+        
+        cv2_img = cv2.cvtColor(np.asarray(img),cv2.COLOR_RGB2BGR)
+        
+        m = self.p
+        list_flip = [0,-1,1]
+        k = random.random()
+
+        if k < m:
+            flip_code = random.choice(list_flip)
+            cv2_img_flip = cv2.flip(cv2_img,flip_code)
+            img = PIL.Image.fromarray(cv2.cvtColor(cv2_img_flip,cv2.COLOR_BGR2RGB))
+
+
+        return img
+
+- If k<m, do flip process.
+- If flip_code = 1, the image will be flipped horizontally
+- If flip_code = 0, the image will be flipped vertically
+- If flip_code = -1, the image will be flipped horizontally and vertically
+
+__________________________________________________________________________________________________________________________________________________________________________________________
+TASK 4
+
+>>> Define a class Cutout to augment the image in transforms
+
+class Cutout(object):
+    def __init__(self,n_patch,size_patch):
+        self.n_patch = n_patch
+        self.size_patch = size_patch
+
+    def __call__(self, img, **kwargs):
+        w,h = img.size
+        cv2_img = cv2.cvtColor(np.asarray(img),cv2.COLOR_RGB2BGR)
+        size_patch = self.size_patch
+
+
+        for n in range(self.n_patch):
+            y = random.randint(0,h)
+            x = random.randint(0,w)
+            y1 = np.clip(y - size_patch // 2, 0, h)
+            y2 = np.clip(y + size_patch // 2, 0, h)
+            x1 = np.clip(x - size_patch // 2, 0, w)
+            x2 = np.clip(x + size_patch // 2, 0, w)
+            cv2_img[x1:x2,y1:y2] = 0
+
+        img = PIL.Image.fromarray(cv2.cvtColor(cv2_img,cv2.COLOR_BGR2RGB))
+
+        return img
+
+- n_patch is the number of patches to cut out of each image. In this case, I choose 8.
+- size_patch is the size of each patch. In this case, I choose 2.
+- Set the pixels values in the rectangle to 0(black), the position of the rectangle is random
+- After completing first 4 tasks, the Top1 accuracy is about 60%
+____________________________________________________________________________________________________________________________________________________________________________________________
+Improvement
+
+>>> Add BatchNorm process to each convolutional layer 
+
+def make_conv_layers(self, architecture):
+	
+        layers = []
+        in_channels = 3
+
+        for v in architecture:
+            if type(v) == int:
+                out_channels = v
+                layers += [nn.Conv2d(in_channels=in_channels,out_channels=out_channels,
+                                    kernel_size=3, stride=1, padding=1),
+                           nn.BatchNorm2d(v),
+                           nn.ReLU(inplace=True)]
+                in_channels = v
+            elif v == 'M':
+                layers += [nn.MaxPool2d(kernel_size=2,stride=2)]
+
+        return nn.Sequential(*layers)
+
+>>> Change the number of features in FC layers to 1300
+>>> Adjust learning rate in train.py
+
+Finally, the TOP-1 accuracy 67.890%, and the model is model_best.pth
+
+____________________________________________________________________________________________________________________________________________________________________________________________
+
+Reference:
+
+1. https://pytorch.org/docs/stable/nn.html
+2. Karen Simonyan and Andrew Zisserman. Very Deep Convolutional Networks for Large-Scale Image Recognition. DOI:
+3. Devries T, Taylor G W. Improved Regularization of Convolutional Neural Networks with Cutout[J]. 2017.
+4. https://pytorch.org/vision/stable/transforms.html
