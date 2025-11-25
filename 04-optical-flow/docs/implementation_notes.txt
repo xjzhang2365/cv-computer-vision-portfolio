@@ -1,0 +1,59 @@
+This assignment is completed with reference to:
+github: https://github.com/NVIDIA/flownet2-pytorch
+
+To solve the occured problem when training the model, following changes have been made:
+1) TypeError: forward() missing 2 required positional arguments: 'data' and 'target': change the number of GPUs to 1, add "CUDA_VISIBLE_DEVICES=0" in each script
+2) AttributeError: module 'time' has no attribute 'clock': Change time.block() to time.time()
+
+Task1: Implement FlowNet Encoder
+a) Implement `networks/FlowNetE.py'
+ 
+Task2: Loss Function
+a) Implement `EPELoss' in `losses.py'
+b) run `run_E.sh'
+I use two methods to compute the loss:
+1) apply L2-norm to all pixel values 
+2) apply L2-norm to each row and then compute their mean
+After implementation and comparison in following functions, it's obvious that method 2) performs better. Hence, method 2) is used in all functions in my assignment.
+The best valid loss with Task2 is about 5.9764
+The best model is saved as "FlowNetE_model_best.pth.tar" in "./work" forder.
+
+Task3: Refinement Module
+a) Implement `networks/FlowNetER.py'
+b) run `run_ER.sh'
+After applying batchNorm to each layer, I found that the performance become worse. So instead of using batchNorm to each layer, I only apply batchNorm in the final layer. 
+The best valid loss is 5.8896
+The best model is saved as "FlowNetER_model_best.pth.tar" in "./work" forder.
+
+Task4: Multi-scale Optimization
+a) Implement `networks/FlowNetERM.py'
+b) Implement `MultiscaleLoss' in `losses.py'
+c) run `run_ERM.sh'
+Two different sets of weights have been tried:
+1) [1, w1, w2]
+2) [w, w/2, w/4]
+After trying many different values, I use method 2), and set w to be 0.16
+The best valid loss is about 5.7429
+The best model is saved as "FlowNetERM_model_best.pth.tar" in "./work" forder.
+
+Task5: Open Challenge
+a) go into the `open_challenge' directory, implement 'networks/FlowNetOurs.py' and 'Oursloss' in 'losses.py'
+b) you can also modify input transformation code in 'dataset.py'
+c) run `run_ours.sh'
+Following methods have been tried:
+1) Install the correlation package from the github page and apply a "correlation layer" that performs multiplicative patch comparisons between two feature maps. 
+---->the computational cost exceeds the constraints.
+2) Add more convolutional layers--->the computational cost exceeds the constraints.
+3) Apply image transformation(crop image)
+4) Set different weights
+5) Use different loss function(e.g.,L1-norm)
+6) Try FlowNetSD method from reference github--->the computational cost exceeds the constraints.
+7) Try different mode of interpolation 
+Although I have tried different methods, finally I faile to make the EPE lower than 5.6 pixels. 
+The best valid loss with Task5 is about 5.67.
+But I forget to save it, the saved "FlowNetER_model_best.pth.tar" in "./work" forder is about 5.71. 
+Some codes I have tried are uncommoned in FlowNetOurs.py
+
+
+
+
