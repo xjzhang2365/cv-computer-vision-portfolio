@@ -200,7 +200,7 @@ Wide → Narrow → Wide       Narrow → Wide → Narrow
 │   └── ResNet variants          # ResNet18, 50, 101
 │
 ├── train.py                     # Training script
-├── eval.py                      # Evaluation script
+├── util.py                      # Evaluation script
 ├── demo.ipynb                   # Interactive demonstration
 │
 ├── figures/                     # Result visualizations
@@ -212,7 +212,7 @@ Wide → Narrow → Wide       Narrow → Wide → Narrow
 ├── docs/
 │   └── technical_details.md    # Implementation notes
 │
-└── checkpoints/                 # Trained models (if available)
+└── checkpoints/                
     ├── pspnet_resnet18.pth
     ├── pspnet_resnet50.pth
     ├── pspnet_resnet101.pth
@@ -379,7 +379,7 @@ MobileNetV2's design choices are validated:
 **Author:** Xiaojun Zhang, PhD  
 **Email:** xzhang2365@gmail.com  
 **Course:** ENGG5104 - Image Processing and Computer Vision  
-**Institution:**The Chinese University of Hong Kong  
+**Institution:** The Chinese University of Hong Kong  
 **Semester:** Spring 2022
 
 ---
